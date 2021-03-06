@@ -35,7 +35,7 @@
         circle.setAttribute('fill-opacity', 0);
         circle.setAttribute('stroke', 'black');
         circle.setAttribute('stroke-width', 2.5);
-        svg.appendChild(circle);
+        svg.insertBefore(circle, plusButton);
 
         const outer = document.createElementNS(SVG_NS, 'circle');
         outer.setAttribute('cx', node.x);
@@ -56,7 +56,7 @@
           plusButton.setAttribute('visibility', 'hidden');
           plusButtonIsVisible = false;
         });
-        svg.appendChild(outer);
+        svg.insertBefore(outer, plusButton);
 
         const label = document.createElementNS(SVG_NS, 'text');
         label.setAttribute('x', node.x - 10);
@@ -64,7 +64,7 @@
         label.setAttribute('font-size', 30);
         label.appendChild(document.createTextNode(node.weight.toString()));
 
-        svg.appendChild(label);
+        svg.insertBefore(label, plusButton);
       };
       const draw = () => {
         for (let i = 0 ; i < nodes.length; i++){
