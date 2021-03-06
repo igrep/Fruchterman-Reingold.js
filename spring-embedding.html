@@ -21,7 +21,7 @@
         [0]
       ];
 
-      const drawNode = (node) => {
+      const drawNewNode = (node) => {
         const circle = document.createElementNS(SVG_NS, 'circle');
         circle.setAttribute('cx', node.x);
         circle.setAttribute('cy', node.y);
@@ -65,7 +65,7 @@
       };
       const draw = () => {
         for (let i = 0 ; i < nodes.length; i++){
-          drawNode(nodes[i]);
+          drawNewNode(nodes[i]);
         }
       }
       const init = () => {
