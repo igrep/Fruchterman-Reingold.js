@@ -7,7 +7,7 @@
     <script>
       const SVG_NS = "http://www.w3.org/2000/svg";
 
-      let svg, plusButton;
+      let svg, svgPoint, plusButton;
       let plusButtonIsVisible = false;
       // type NodeId = int
       // type Node = { weight: int, x: int, y: int }
@@ -20,6 +20,12 @@
       const graph = [
         [0]
       ];
+
+      const getCursorPoint = (event) => {
+        svgPoint.x = event.clientX;
+        svgPoint.y = event.clientY;
+        return svgPoint.matrixTransform(svg.getScreenCTM().inverse());
+      }
 
       const drawNewNode = (node) => {
         const circle = document.createElementNS(SVG_NS, 'circle');
@@ -41,12 +47,9 @@
         outer.setAttribute('stroke-width', 14);
         outer.addEventListener('mousemove', event => {
           plusButtonIsVisible = true;
-          // TODO: destructuring しない方法に書き換える
-          const { left, top } = event.currentTarget.getBoundingClientRect();
-          const { pageXOffset, pageYOffset } = window;
-          const { pageX, pageY } = event;
-          plusButton.setAttribute('x', pageX - left - pageXOffset);
-          plusButton.setAttribute('y', pageY - top - pageYOffset);
+          const cursorPoint = getCursorPoint(event);
+          plusButton.setAttribute('x', cursorPoint.x - 20);
+          plusButton.setAttribute('y', cursorPoint.y - 20);
           plusButton.setAttribute('visibility', 'visible');
         });
         outer.addEventListener('mouseleave', () => {
@@ -70,6 +73,7 @@
       }
       const init = () => {
         svg = document.getElementById('graph');
+        svgPoint = svg.createSVGPoint();
         plusButton = document.getElementById('plus-button');
         draw();
       }
