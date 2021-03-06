@@ -42,8 +42,7 @@
         outer.setAttribute('cy', node.y);
         outer.setAttribute('r', 33);
         outer.setAttribute('fill', 'none');
-        //outer.setAttribute('stroke-opacity', 0);
-        outer.setAttribute('stroke', 'red');
+        outer.setAttribute('pointer-events', 'stroke');
         outer.setAttribute('stroke-width', 14);
         outer.addEventListener('mousemove', event => {
           plusButtonIsVisible = true;
