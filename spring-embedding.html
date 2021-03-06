@@ -65,16 +65,11 @@
 
         svg.insertBefore(label, plusButton);
       };
-      const draw = () => {
-        for (let i = 0 ; i < nodes.length; i++){
-          drawNewNode(nodes[i]);
-        }
-      }
       const init = () => {
         svg = document.getElementById('graph');
         svgPoint = svg.createSVGPoint();
         plusButton = document.getElementById('plus-button');
-        draw();
+        drawNewNode(nodes[0]);
       }
     </script>
   </head>
