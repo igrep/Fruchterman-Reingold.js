@@ -8,12 +8,13 @@
       const SVG_NS = "http://www.w3.org/2000/svg";
 
       let svg, svgPoint, plusButton;
-      let plusButtonIsVisible = false;
+      let focusedNode = null;
       // type NodeId = int
-      // type Node = { weight: int, x: int, y: int }
+      // type Node = { id: NodeId, weight: int, velocity: Velocity, x: number, y: number }
+      // type Velocity = { x: number, y: number }
       // nodes :: Array<NodeId, Node>
       const nodes = [
-        { weight: 1, x: 150, y: 100 }
+        { id: 0, weight: 1, velocity: { x: 0, y: 0 }, x: 150, y: 100 }
       ];
       // graph :: Array<NodeId, Array<NodeId, number>>
       // 最初のノードは一つだけなので距離は0だけ。
@@ -21,11 +22,75 @@
         [0]
       ];
 
-      const getCursorPoint = (event) => {
+      const distance = (node1, node2) => {
+        return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
+      };
+
+      const adjustNodePositions = () => {
+          // const g  = 0.01; // 原点への引力
+          const q  = 0.2; // ノード間の斥力
+          const k  = 1.0; // ばね定数
+          const l  = 1.0; // ばねの自然長
+          const mu = 0.9; // 摩擦係数
+          const dt = 0.1; // 微小時間
+          const e  = 0.1; // 運動エネルギーのしきい値
+
+          let kineticEnergy = 0;
+          // 速度の初期化。再配置の度に一度0にする
+          for (const node of nodes) {
+            node.velocity = { x: 0, y: 0 };
+          }
+
+          do {
+            for (const node1 of nodes) {
+              let power = { x: 0, y: 0 };
+              for (const node2 of nodes) {
+                if (node1.id === node2.id) { continue; }
+                let d = distance(node1, node2);
+                // クーロン力
+                power.x = power.x + q / Math.pow(d, 2);
+                power.y = power.y + q / Math.pow(d, 2);
+              }
+
+              for (const node2Id of graph[node1.id].keys()) {
+                if (node1.id === node2Id) { continue; }
+                const node2 = nodes[node2Id];
+                let d = distance(node1, node2);
+                // フックの法則による力
+                power.x = power.x + k * (d - l);
+                power.y = power.y + k * (d - l);
+              }
+
+              node1.velocity.x = (node1.velocity.x + 0.1 * power.x / node1.weight) * 0.9;
+              node1.velocity.y = (node1.velocity.y + 0.1 * power.y / node1.weight) * 0.9;
+              node1.x = node1.x + 0.1 * node1.velocity.x;
+              node1.y = node1.y + 0.1 * node1.velocity.y;
+
+              kineticEnergy = kineticEnergy + node1.weight * Math.pow(node1, 2);
+            }
+          } while (kineticEnergy < e);
+      };
+
+      const getCursorPosition = (event) => {
         svgPoint.x = event.clientX;
         svgPoint.y = event.clientY;
         return svgPoint.matrixTransform(svg.getScreenCTM().inverse());
       }
+
+      const createNodeBy = (adjacent, cursorPosition) => {
+        const newNode = {
+          id: nodes.length,
+          weight: 1,
+          velocity: { x: 0, y: 0 },
+          x: cursorPosition.x,
+          y: cursorPosition.y
+        };
+        nodes.push(newNode);
+        graph[adjacent.id][newNode.id] = distance(adjacent, newNode);
+        graph[newNode.id] = [];
+        graph[newNode.id][newNode.id] = 0;
+        return newNode;
+      };
 
       const drawNewNode = (node) => {
         const circle = document.createElementNS(SVG_NS, 'circle');
@@ -35,6 +100,7 @@
         circle.setAttribute('fill-opacity', 0);
         circle.setAttribute('stroke', 'black');
         circle.setAttribute('stroke-width', 2.5);
+        circle.setAttribute('id', `node-${node.id}`);
         svg.insertBefore(circle, plusButton);
 
         const outer = document.createElementNS(SVG_NS, 'circle');
@@ -44,16 +110,25 @@
         outer.setAttribute('fill', 'none');
         outer.setAttribute('pointer-events', 'stroke');
         outer.setAttribute('stroke-width', 14);
+        outer.setAttribute('id', `node-outer-${node.id}`);
         outer.addEventListener('mousemove', event => {
-          plusButtonIsVisible = true;
-          const cursorPoint = getCursorPoint(event);
-          plusButton.setAttribute('x', cursorPoint.x - 20);
-          plusButton.setAttribute('y', cursorPoint.y - 20);
+          focusedNode = node;
+          const cursorPosition = getCursorPosition(event);
+          plusButton.setAttribute('x', cursorPosition.x - 20);
+          plusButton.setAttribute('y', cursorPosition.y - 20);
           plusButton.setAttribute('visibility', 'visible');
         });
         outer.addEventListener('mouseleave', () => {
           plusButton.setAttribute('visibility', 'hidden');
-          plusButtonIsVisible = false;
+          focusedNode = null;
+        });
+        outer.addEventListener('click', (event) => {
+          if (focusedNode === null) { return; }
+          const cursorPosition = getCursorPosition(event);
+          const newNode = createNodeBy(focusedNode, cursorPosition);
+          drawNewNode(newNode);
+          adjustNodePositions();
+          redraw();
         });
         svg.insertBefore(outer, plusButton);
 
@@ -61,9 +136,30 @@
         label.setAttribute('x', node.x - 10);
         label.setAttribute('y', node.y + 10);
         label.setAttribute('font-size', 30);
+        label.setAttribute('id', `node-label-${node.id}`);
         label.appendChild(document.createTextNode(node.weight.toString()));
 
         svg.insertBefore(label, plusButton);
+      };
+      const redraw = () => {
+        for (const node of nodes) {
+          moveNode(node);
+        }
+      };
+      // TODO: group elements in a node as an <svg>.
+      const moveNode = (node) => {
+        const circle = document.getElementById(`node-${node.id}`);
+        console.log(node);
+        circle.setAttribute('cx', node.x);
+        circle.setAttribute('cy', node.y);
+
+        const outer = document.getElementById(`node-outer-${node.id}`);
+        outer.setAttribute('cx', node.x);
+        outer.setAttribute('cy', node.y);
+
+        const label = document.getElementById(`node-label-${node.id}`);
+        label.setAttribute('x', node.x - 10);
+        label.setAttribute('y', node.y + 10);
       };
       const init = () => {
         svg = document.getElementById('graph');
