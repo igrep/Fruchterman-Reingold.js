@@ -61,10 +61,10 @@
                 power.y = power.y + k * (d - l);
               }
 
-              node1.velocity.x = (node1.velocity.x + 0.1 * power.x / node1.weight) * 0.9;
-              node1.velocity.y = (node1.velocity.y + 0.1 * power.y / node1.weight) * 0.9;
-              node1.x = node1.x + 0.1 * node1.velocity.x;
-              node1.y = node1.y + 0.1 * node1.velocity.y;
+              node1.velocity.x = (node1.velocity.x + dt * power.x / node1.weight) * mu;
+              node1.velocity.y = (node1.velocity.y + dt * power.y / node1.weight) * mu;
+              node1.x = node1.x + dt * node1.velocity.x;
+              node1.y = node1.y + dt * node1.velocity.y;
 
               kineticEnergy = kineticEnergy + node1.weight * Math.pow(node1, 2);
             }
