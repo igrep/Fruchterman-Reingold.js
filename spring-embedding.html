@@ -92,30 +92,42 @@
         return newNode;
       };
 
+      const radius = 20;
+      const plusButtonDiameter = 20;
+      const outerRadius = radius * 1.5;
+      const circleCenter = plusButtonDiameter + outerRadius;
+
       const drawNewNode = (node) => {
+        const thickness = 2;
+
+        const nodeSvg = document.createElementNS(SVG_NS, 'svg');
+        nodeSvg.setAttribute('x', node.x - circleCenter);
+        nodeSvg.setAttribute('y', node.y - circleCenter);
+        nodeSvg.setAttribute('width',  circleCenter * 2);
+        nodeSvg.setAttribute('height', circleCenter * 2);
+        nodeSvg.setAttribute('id', `node-${node.id}`);
+
         const circle = document.createElementNS(SVG_NS, 'circle');
-        circle.setAttribute('cx', node.x);
-        circle.setAttribute('cy', node.y);
-        circle.setAttribute('r', 25);
+        circle.setAttribute('cx', circleCenter);
+        circle.setAttribute('cy', circleCenter);
+        circle.setAttribute('r', radius);
         circle.setAttribute('fill-opacity', 0);
         circle.setAttribute('stroke', 'black');
-        circle.setAttribute('stroke-width', 2.5);
-        circle.setAttribute('id', `node-${node.id}`);
-        svg.insertBefore(circle, plusButton);
+        circle.setAttribute('stroke-width', thickness);
+        nodeSvg.appendChild(circle);
 
         const outer = document.createElementNS(SVG_NS, 'circle');
-        outer.setAttribute('cx', node.x);
-        outer.setAttribute('cy', node.y);
-        outer.setAttribute('r', 33);
+        outer.setAttribute('cx', circleCenter);
+        outer.setAttribute('cy', circleCenter);
+        outer.setAttribute('r', outerRadius);
         outer.setAttribute('fill', 'none');
         outer.setAttribute('pointer-events', 'stroke');
-        outer.setAttribute('stroke-width', 14);
-        outer.setAttribute('id', `node-outer-${node.id}`);
+        outer.setAttribute('stroke-width', plusButtonDiameter);
         outer.addEventListener('mousemove', event => {
           focusedNode = node;
           const cursorPosition = getCursorPosition(event);
-          plusButton.setAttribute('x', cursorPosition.x - 20);
-          plusButton.setAttribute('y', cursorPosition.y - 20);
+          plusButton.setAttribute('x', cursorPosition.x - plusButtonDiameter);
+          plusButton.setAttribute('y', cursorPosition.y - plusButtonDiameter);
           plusButton.setAttribute('visibility', 'visible');
         });
         outer.addEventListener('mouseleave', () => {
@@ -130,36 +142,26 @@
           adjustNodePositions();
           redraw();
         });
-        svg.insertBefore(outer, plusButton);
+        nodeSvg.appendChild(outer);
 
         const label = document.createElementNS(SVG_NS, 'text');
-        label.setAttribute('x', node.x - 10);
-        label.setAttribute('y', node.y + 10);
-        label.setAttribute('font-size', 30);
-        label.setAttribute('id', `node-label-${node.id}`);
+        label.setAttribute('x', circleCenter * 0.89);
+        label.setAttribute('y', circleCenter * 1.15);
+        label.setAttribute('font-size', 20);
         label.appendChild(document.createTextNode(node.weight.toString()));
 
-        svg.insertBefore(label, plusButton);
+        nodeSvg.appendChild(label);
+        svg.insertBefore(nodeSvg, plusButton);
       };
       const redraw = () => {
         for (const node of nodes) {
           moveNode(node);
         }
       };
-      // TODO: group elements in a node as an <svg>.
       const moveNode = (node) => {
-        const circle = document.getElementById(`node-${node.id}`);
-        console.log(node);
-        circle.setAttribute('cx', node.x);
-        circle.setAttribute('cy', node.y);
-
-        const outer = document.getElementById(`node-outer-${node.id}`);
-        outer.setAttribute('cx', node.x);
-        outer.setAttribute('cy', node.y);
-
-        const label = document.getElementById(`node-label-${node.id}`);
-        label.setAttribute('x', node.x - 10);
-        label.setAttribute('y', node.y + 10);
+        const nodeSvg = document.getElementById(`node-${node.id}`);
+        nodeSvg.setAttribute('x', node.x - circleCenter);
+        nodeSvg.setAttribute('y', node.y - circleCenter);
       };
       const init = () => {
         svg = document.getElementById('graph');
@@ -171,8 +173,8 @@
   </head>
   <body onload="init()">
     <h1>自動描画されるグラフ</h1>
-    <svg id="graph" width="1000" height="1000" xmlns="http://www.w3.org/2000/svg">
-      <svg stroke="#000" visibility="hidden" id="plus-button" x="30" y="30">
+    <svg id="graph" width="2000" height="2000" xmlns="http://www.w3.org/2000/svg">
+      <svg stroke="#000" visibility="hidden" id="plus-button">
         <circle r="10" cx="25" cy="25" fill="none" stroke-width="2"/>
         <rect transform="translate(-5, 0)" x="25" y="25" width="10" height=".5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
         <rect transform="translate(0, -5)" x="25" y="25" width=".5" height="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
