@@ -68,7 +68,7 @@
 
               kineticEnergy = kineticEnergy + node1.weight * Math.pow(node1, 2);
             }
-          } while (kineticEnergy < e);
+          } while (kineticEnergy > e);
       };
 
       const getCursorPosition = (event) => {
