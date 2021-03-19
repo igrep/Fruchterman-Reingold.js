@@ -66,7 +66,8 @@
               node1.x = node1.x + dt * node1.velocity.x;
               node1.y = node1.y + dt * node1.velocity.y;
 
-              kineticEnergy = kineticEnergy + node1.weight * Math.pow(node1, 2);
+              const node1Velocity = Math.pow(node1.velocity.x, 2) + Math.pow(node1.velocity.y, 2);
+              kineticEnergy = kineticEnergy + node1.weight * node1Velocity;
             }
           } while (kineticEnergy > e);
       };
