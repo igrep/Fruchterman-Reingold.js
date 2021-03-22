@@ -87,6 +87,7 @@
           y: cursorPosition.y
         };
         nodes.push(newNode);
+        // TODO: 多分ここで設定したdistanceは使わなくていいので最適化
         graph[adjacent.id][newNode.id] = distance(adjacent, newNode);
         graph[newNode.id] = [];
         graph[newNode.id][newNode.id] = 0;
