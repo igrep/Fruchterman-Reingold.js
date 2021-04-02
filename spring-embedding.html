@@ -10,11 +10,11 @@
       let svg, svgPoint, plusButton;
       let focusedNode = null;
       // type NodeId = int
-      // type Node = { id: NodeId, weight: int, velocity: Velocity, x: number, y: number }
-      // type Velocity = { x: number, y: number }
+      // type Node = { id: NodeId, weight: int, displacement: Displacement, x: number, y: number }
+      // type Displacement = { x: number, y: number }
       // nodes :: Array<NodeId, Node>
       const nodes = [
-        { id: 0, weight: 1, velocity: { x: 0, y: 0 }, x: 150, y: 100 }
+        { id: 0, weight: 1, displacement: { x: 0, y: 0 }, x: 150, y: 100 }
       ];
       // graph :: Array<NodeId, Array<NodeId, number>>
       // 最初のノードは一つだけなので距離は0だけ。
@@ -27,49 +27,69 @@
       };
 
       const adjustNodePositions = () => {
-          // const g  = 0.01; // 原点への引力
-          const q  = 0.2; // ノード間の斥力
-          const k  = 1.0; // ばね定数
-          const l  = 1.0; // ばねの自然長
-          const mu = 0.9; // 摩擦係数
-          const dt = 0.1; // 微小時間
-          const e  = 0.1; // 運動エネルギーのしきい値
+        const rootWidth = parseInt(svg.getAttribute('width'), 10);
+        const rootHeight = parseInt(svg.getAttribute('height'), 10);
+        const rootArea = rootHeight * rootWidth;
+        const nodeCount = nodes.length;
+        const c = 1;
+        const k = c * Math.sqrt(rootArea / nodes.length);
 
-          let kineticEnergy = 0;
-          // 速度の初期化。再配置の度に一度0にする
-          for (const node of nodes) {
-            node.velocity = { x: 0, y: 0 };
+        const attraction = (distance) => {
+          return Math.pow(distance, 2) / k;
+        }
+
+        const repulsion = (distance) => {
+          return - Math.pow(k, 2) / distance;
+        }
+
+        const iterations = 50;
+
+        let t = rootWidth / 10;
+        const dt = t / iterations + 1;
+
+        for (let i = 0; i < iterations; i++) {
+          for (const node1 of nodes){
+            node1.displacement = { x: 0, y: 0 };
+            for (const node2 of nodes){
+              if (node1.id !== node2.id) {
+                const dx = node1.x - node2.x;
+                const dy = node1.y - node2.y;
+                const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+                const rep = repulsion(distance);
+
+                node1.displacement.x = node1.displacement.x + (dx / distance) * rep;
+                node1.displacement.y = node1.displacement.y + (dy / distance) * rep;
+              }
+            }
+            for (const node2Id of graph[node1.id].keys()) {
+              if (node1.id !== node2Id) {
+                const node2 = nodes[node2Id];
+                const dx = node1.x - node2.x;
+                const dy = node1.y - node2.y;
+                const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+                const att = attraction(distance);
+
+                node1.displacement.x = node1.displacement.x - (dx / distance) * att;
+                node1.displacement.y = node1.displacement.y - (dy / distance) * att;
+
+                node2.displacement.x = node2.displacement.x + (dx / distance) * att;
+                node2.displacement.y = node2.displacement.y + (dy / distance) * att;
+              }
+            }
           }
 
-          do {
-            for (const node1 of nodes) {
-              let power = { x: 0, y: 0 };
-              for (const node2 of nodes) {
-                if (node1.id === node2.id) { continue; }
-                let d = distance(node1, node2);
-                // クーロン力
-                power.x = power.x + q / Math.pow(d, 2);
-                power.y = power.y + q / Math.pow(d, 2);
-              }
+          for (const node of nodes){
+            const length = Math.sqrt(Math.pow(node.displacement.x, 2) + Math.pow(node.displacement.y, 2));
+            node.x = node.x + (node.displacement.x / length) * Math.min(node.displacement.x, t);
+            node.y = node.y + (node.displacement.y / length) * Math.min(node.displacement.y, t);
 
-              for (const node2Id of graph[node1.id].keys()) {
-                if (node1.id === node2Id) { continue; }
-                const node2 = nodes[node2Id];
-                let d = distance(node1, node2);
-                // フックの法則による力
-                power.x = power.x + k * (d - l);
-                power.y = power.y + k * (d - l);
-              }
+            // 中心が0ではないため、元の論文の式のとおりではなく、最も端の点と比較する
+            node.x = Math.min(rootWidth, Math.max(0, node.x));
+            node.y = Math.min(rootHeight, Math.max(0, node.y));
+          }
 
-              node1.velocity.x = (node1.velocity.x + dt * power.x / node1.weight) * mu;
-              node1.velocity.y = (node1.velocity.y + dt * power.y / node1.weight) * mu;
-              node1.x = node1.x + dt * node1.velocity.x;
-              node1.y = node1.y + dt * node1.velocity.y;
-
-              const node1Velocity = Math.pow(node1.velocity.x, 2) + Math.pow(node1.velocity.y, 2);
-              kineticEnergy = kineticEnergy + node1.weight * node1Velocity;
-            }
-          } while (kineticEnergy > e);
+          t = t - dt;
+        }
       };
 
       const getCursorPosition = (event) => {
@@ -82,7 +102,7 @@
         const newNode = {
           id: nodes.length,
           weight: 1,
-          velocity: { x: 0, y: 0 },
+          displacement: { x: 0, y: 0 },
           x: cursorPosition.x,
           y: cursorPosition.y
         };
@@ -175,7 +195,7 @@
   </head>
   <body onload="init()">
     <h1>自動描画されるグラフ</h1>
-    <svg id="graph" width="2000" height="2000" xmlns="http://www.w3.org/2000/svg">
+    <svg id="graph" width="6000" height="6000" xmlns="http://www.w3.org/2000/svg">
       <svg stroke="#000" visibility="hidden" id="plus-button">
         <circle r="10" cx="25" cy="25" fill="none" stroke-width="2"/>
         <rect transform="translate(-5, 0)" x="25" y="25" width="10" height=".5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
