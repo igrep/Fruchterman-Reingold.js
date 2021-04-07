@@ -7,28 +7,43 @@
     <script>
       const SVG_NS = "http://www.w3.org/2000/svg";
 
-      let svg, svgPoint, plusButton;
-      let focusedNode = null;
+      const generateNodes = (nodesCount) => {
+        const resultNodes = [];
+        const resultGraph = [];
+        const createEdgeProbability = 0.2;
+        for (let i = 0; i < nodesCount; i++) {
+          resultNodes.push({
+            id: i,
+            displacement: { x: 0, y: 0 },
+            x: Math.random() * rootWidth,
+            y: Math.random() * rootHeight
+          });
+        }
+        for (let i = 0; i < nodesCount; i++) {
+          for (let j = 0; j < nodesCount; j++) {
+            if (resultGraph[i] === undefined){
+              resultGraph[i] = [];
+            }
+            if (Math.random() < createEdgeProbability) {
+              resultGraph[i].push(j);
+            }
+          }
+        }
+        return { nodes: resultNodes, graph: resultGraph };
+      };
+
       // type NodeId = int
       // type Node = { id: NodeId, weight: int, displacement: Displacement, x: number, y: number }
       // type Displacement = { x: number, y: number }
       // nodes :: Array<NodeId, Node>
-      const nodes = [
-        { id: 0, weight: 1, displacement: { x: 0, y: 0 }, x: 150, y: 100 }
-      ];
       // graph :: Array<NodeId, Array<NodeId, number>>
-      // 最初のノードは一つだけなので距離は0だけ。
-      const graph = [
-        [0]
-      ];
+      let svg, rootWidth, rootHeight, svgPoint, nodes, graph;
 
       const distance = (node1, node2) => {
         return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
       };
 
       const adjustNodePositions = () => {
-        const rootWidth = parseInt(svg.getAttribute('width'), 10);
-        const rootHeight = parseInt(svg.getAttribute('height'), 10);
         const rootArea = rootHeight * rootWidth;
         const nodeCount = nodes.length;
         const c = 1;
@@ -61,7 +76,7 @@
                 node1.displacement.y = node1.displacement.y + (dy / distance) * rep;
               }
             }
-            for (const node2Id of graph[node1.id].keys()) {
+            for (const node2Id of graph[node1.id]) {
               if (node1.id !== node2Id) {
                 const node2 = nodes[node2Id];
                 const dx = node1.x - node2.x;
@@ -98,82 +113,38 @@
         return svgPoint.matrixTransform(svg.getScreenCTM().inverse());
       }
 
-      const createNodeBy = (adjacent, cursorPosition) => {
-        const newNode = {
-          id: nodes.length,
-          weight: 1,
-          displacement: { x: 0, y: 0 },
-          x: cursorPosition.x,
-          y: cursorPosition.y
-        };
-        nodes.push(newNode);
-        // TODO: 多分ここで設定したdistanceは使わなくていいので最適化
-        graph[adjacent.id][newNode.id] = distance(adjacent, newNode);
-        graph[newNode.id] = [];
-        graph[newNode.id][newNode.id] = 0;
-        return newNode;
-      };
-
-      const radius = 20;
-      const plusButtonDiameter = 20;
-      const outerRadius = radius * 1.5;
-      const circleCenter = plusButtonDiameter + outerRadius;
 
       const drawNewNode = (node) => {
-        const thickness = 2;
+        const radius = 10;
+        const thickness = 1;
+        const circleSize = radius + thickness;
 
         const nodeSvg = document.createElementNS(SVG_NS, 'svg');
-        nodeSvg.setAttribute('x', node.x - circleCenter);
-        nodeSvg.setAttribute('y', node.y - circleCenter);
-        nodeSvg.setAttribute('width',  circleCenter * 2);
-        nodeSvg.setAttribute('height', circleCenter * 2);
+        nodeSvg.setAttribute('x', node.x - circleSize);
+        nodeSvg.setAttribute('y', node.y - circleSize);
+        nodeSvg.setAttribute('width',  circleSize * 2);
+        nodeSvg.setAttribute('height', circleSize * 2);
         nodeSvg.setAttribute('id', `node-${node.id}`);
 
         const circle = document.createElementNS(SVG_NS, 'circle');
-        circle.setAttribute('cx', circleCenter);
-        circle.setAttribute('cy', circleCenter);
+        circle.setAttribute('cx', circleSize);
+        circle.setAttribute('cy', circleSize);
         circle.setAttribute('r', radius);
         circle.setAttribute('fill-opacity', 0);
         circle.setAttribute('stroke', 'black');
         circle.setAttribute('stroke-width', thickness);
         nodeSvg.appendChild(circle);
 
-        const outer = document.createElementNS(SVG_NS, 'circle');
-        outer.setAttribute('cx', circleCenter);
-        outer.setAttribute('cy', circleCenter);
-        outer.setAttribute('r', outerRadius);
-        outer.setAttribute('fill', 'none');
-        outer.setAttribute('pointer-events', 'stroke');
-        outer.setAttribute('stroke-width', plusButtonDiameter);
-        outer.addEventListener('mousemove', event => {
-          focusedNode = node;
-          const cursorPosition = getCursorPosition(event);
-          plusButton.setAttribute('x', cursorPosition.x - plusButtonDiameter);
-          plusButton.setAttribute('y', cursorPosition.y - plusButtonDiameter);
-          plusButton.setAttribute('visibility', 'visible');
-        });
-        outer.addEventListener('mouseleave', () => {
-          plusButton.setAttribute('visibility', 'hidden');
-          focusedNode = null;
-        });
-        outer.addEventListener('click', (event) => {
-          if (focusedNode === null) { return; }
-          const cursorPosition = getCursorPosition(event);
-          const newNode = createNodeBy(focusedNode, cursorPosition);
-          drawNewNode(newNode);
-          adjustNodePositions();
-          redraw();
-        });
-        nodeSvg.appendChild(outer);
-
         const label = document.createElementNS(SVG_NS, 'text');
-        label.setAttribute('x', circleCenter * 0.89);
-        label.setAttribute('y', circleCenter * 1.15);
-        label.setAttribute('font-size', 20);
-        label.appendChild(document.createTextNode(node.weight.toString()));
+        label.setAttribute('x', radius * 0.68);
+        label.setAttribute('y', radius * 1.35);
+        label.setAttribute('font-size', radius * 0.75);
+        let nodeIdString = node.id.toString();
+        if (node.id < 10) { nodeIdString = `0${nodeIdString}`; }
+        label.appendChild(document.createTextNode(nodeIdString));
 
         nodeSvg.appendChild(label);
-        svg.insertBefore(nodeSvg, plusButton);
+        svg.appendChild(nodeSvg);
       };
       const redraw = () => {
         for (const node of nodes) {
@@ -188,19 +159,21 @@
       const init = () => {
         svg = document.getElementById('graph');
         svgPoint = svg.createSVGPoint();
-        plusButton = document.getElementById('plus-button');
-        drawNewNode(nodes[0]);
+        rootWidth = parseInt(svg.getAttribute('width'), 10);
+        rootHeight = parseInt(svg.getAttribute('height'), 10);
+
+        const result = generateNodes(100);
+        nodes = result.nodes;
+        graph = result.graph;
+        for (node of nodes) {
+          drawNewNode(node);
+        }
       }
     </script>
   </head>
   <body onload="init()">
     <h1>自動描画されるグラフ</h1>
-    <svg id="graph" width="6000" height="6000" xmlns="http://www.w3.org/2000/svg">
-      <svg stroke="#000" visibility="hidden" id="plus-button">
-        <circle r="10" cx="25" cy="25" fill="none" stroke-width="2"/>
-        <rect transform="translate(-5, 0)" x="25" y="25" width="10" height=".5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-        <rect transform="translate(0, -5)" x="25" y="25" width=".5" height="10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-      </svg>
+    <svg id="graph" width="1000" height="1000" xmlns="http://www.w3.org/2000/svg">
     </svg>
   </body>
 </html>
