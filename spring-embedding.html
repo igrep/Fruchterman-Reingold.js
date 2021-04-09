@@ -40,10 +40,6 @@
       // graph :: Array<NodeId, Array<NodeId, number>>
       let svg, rootWidth, rootHeight, svgPoint, nodes, graph;
 
-      const distance = (node1, node2) => {
-        return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
-      };
-
       const adjustNodePositions = () => {
         const rootArea = rootHeight * rootWidth;
         const nodeCount = nodes.length;
@@ -152,16 +148,16 @@
         const { x: srcX1, y: srcY1 } = node1;
         const { x: srcX2, y: srcY2 } = node2;
 
-        const distanceX = Math.abs(srcX1 - srcX2);
-        const distanceY = Math.abs(srcY1 - srcY2);
-        const distance = Math.sqrt(Math.pow(distanceX, 2) + Math.pow(distanceY, 2));
+        const dx = Math.abs(srcX1 - srcX2);
+        const dy = Math.abs(srcY1 - srcY2);
+        const distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
         // ノードを表す円の半径と、ノードの位置間の距離の比を求めることで、
         // ノードの位置と結果となる（円周上の）点がなす直角三角形Aの斜辺の長さを求める
         const ratio = radius / distance;
 
         // ノードの位置と結果となる点との距離
-        const distanceResultX = distanceX * ratio;
-        const distanceResultY = distanceY * ratio;
+        const distanceResultX = dx * ratio;
+        const distanceResultY = dy * ratio;
 
         const node1IsLefter = srcX1 < srcX2;
         const node1IsUpper = srcY1 < srcY2;
