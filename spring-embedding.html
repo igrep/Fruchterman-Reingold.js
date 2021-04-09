@@ -6,11 +6,12 @@
     <title>自動描画されるグラフ</title>
     <script>
       const SVG_NS = "http://www.w3.org/2000/svg";
+      const radius = 10;
 
       const generateNodes = (nodesCount) => {
         const resultNodes = [];
         const resultGraph = [];
-        const createEdgeProbability = 0.2;
+        const createEdgeProbability = 0.01;
         for (let i = 0; i < nodesCount; i++) {
           resultNodes.push({
             id: i,
@@ -113,9 +114,7 @@
         return svgPoint.matrixTransform(svg.getScreenCTM().inverse());
       }
 
-
       const drawNewNode = (node) => {
-        const radius = 10;
         const thickness = 1;
         const circleSize = radius + thickness;
 
@@ -146,16 +145,59 @@
         nodeSvg.appendChild(label);
         svg.appendChild(nodeSvg);
       };
+
+      // 各ノードを表す円における、円周上の点を計算することで、
+      // エッジがノードの円周に重ならないようにする
+      const calculateEdgePosition = (node1, node2) => {
+        const { x: srcX1, y: srcY1 } = node1;
+        const { x: srcX2, y: srcY2 } = node2;
+
+        const distanceX = srcX1 - srcX2;
+        const distanceY = srcY1 - srcY2;
+        const distance = Math.sqrt(Math.pow(distanceX, 2) + Math.pow(distanceY, 2));
+        // ノードを表す円の半径と、ノードの位置間の距離の比を求めることで、
+        // ノードの位置と結果となる（円周上の）点がなす直角三角形Aの斜辺の長さを求める
+        const ratio = radius / distance;
+
+        // ノードの位置と結果となる点との距離
+        const distanceResultX = distanceX * ratio;
+        const distanceResultY = distanceY * ratio;
+
+        const node1IsLefter = srcX1 < srcX2;
+        const node1IsUpper = srcY1 < srcY2;
+
+        const x1 = node1IsLefter ? srcX1 + distanceResultX : srcX1 - distanceResultX;
+        const x2 = node1IsLefter ? srcX2 - distanceResultX : srcX2 + distanceResultX;
+
+        const y1 = node1IsUpper ? srcY1 + distanceResultY : srcY1 - distanceResultY;
+        const y2 = node1IsUpper ? srcY2 - distanceResultY : srcY2 + distanceResultY;
+
+        return { x1, y1, x2, y2 };
+      };
+
+      const drawNewEdge = (node1, node2) => {
+        const edge = document.createElementNS(SVG_NS, 'line');
+        const { x1, y1, x2, y2 } = calculateEdgePosition(node1, node2);
+        edge.setAttribute('x1', x1);
+        edge.setAttribute('y1', y1);
+        edge.setAttribute('x2', x2);
+        edge.setAttribute('y2', y2);
+        edge.setAttribute('stroke', 'black');
+        edge.setAttribute('id', `edge-${node1.id}-${node2.id}`);
+        svg.appendChild(edge);
+      }
       const redraw = () => {
         for (const node of nodes) {
           moveNode(node);
         }
       };
+
       const moveNode = (node) => {
         const nodeSvg = document.getElementById(`node-${node.id}`);
         nodeSvg.setAttribute('x', node.x - circleCenter);
         nodeSvg.setAttribute('y', node.y - circleCenter);
       };
+
       const init = () => {
         svg = document.getElementById('graph');
         svgPoint = svg.createSVGPoint();
@@ -165,15 +207,19 @@
         const result = generateNodes(100);
         nodes = result.nodes;
         graph = result.graph;
-        for (node of nodes) {
-          drawNewNode(node);
+        for (node1 of nodes) {
+          drawNewNode(node1);
+          for (node2Id of graph[node1.id]) {
+            const node2 = nodes[node2Id];
+            drawNewEdge(node1, node2);
+          }
         }
       }
     </script>
   </head>
   <body onload="init()">
     <h1>自動描画されるグラフ</h1>
-    <svg id="graph" width="1000" height="1000" xmlns="http://www.w3.org/2000/svg">
+    <svg id="graph" width="1500" height="1500" xmlns="http://www.w3.org/2000/svg">
     </svg>
   </body>
 </html>
