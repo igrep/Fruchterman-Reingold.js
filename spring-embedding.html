@@ -11,7 +11,7 @@
       const generateNodes = (nodesCount) => {
         const resultNodes = [];
         const resultGraph = [];
-        const createEdgeProbability = 0.01;
+        const createEdgeProbability = 0.1;
         for (let i = 0; i < nodesCount; i++) {
           resultNodes.push({
             id: i,
@@ -200,7 +200,7 @@
         rootWidth = parseInt(svg.getAttribute('width'), 10);
         rootHeight = parseInt(svg.getAttribute('height'), 10);
 
-        const result = generateNodes(100);
+        const result = generateNodes(10);
         nodes = result.nodes;
         graph = result.graph;
         for (node1 of nodes) {
@@ -215,7 +215,7 @@
   </head>
   <body onload="init()">
     <h1>自動描画されるグラフ</h1>
-    <svg id="graph" width="1500" height="1500" xmlns="http://www.w3.org/2000/svg">
+    <svg id="graph" width="500" height="500" xmlns="http://www.w3.org/2000/svg">
     </svg>
   </body>
 </html>
