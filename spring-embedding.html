@@ -152,8 +152,8 @@
         const { x: srcX1, y: srcY1 } = node1;
         const { x: srcX2, y: srcY2 } = node2;
 
-        const distanceX = srcX1 - srcX2;
-        const distanceY = srcY1 - srcY2;
+        const distanceX = Math.abs(srcX1 - srcX2);
+        const distanceY = Math.abs(srcY1 - srcY2);
         const distance = Math.sqrt(Math.pow(distanceX, 2) + Math.pow(distanceY, 2));
         // ノードを表す円の半径と、ノードの位置間の距離の比を求めることで、
         // ノードの位置と結果となる（円周上の）点がなす直角三角形Aの斜辺の長さを求める
