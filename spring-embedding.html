@@ -11,7 +11,7 @@
       const generateNodes = (nodesCount) => {
         const resultNodes = [];
         const resultGraph = [];
-        const createEdgeProbability = 0.1;
+        const createEdgeProbability = 0.2;
         for (let i = 0; i < nodesCount; i++) {
           resultNodes.push({
             id: i,
@@ -26,6 +26,9 @@
               resultGraph[i] = [];
             }
             if (i == j) { continue; }
+            // 無向グラフなので、すでにつながっている場合はスキップ
+            if (resultGraph[i].includes(j)) { continue; }
+            if ((resultGraph[j] || []).includes(i)) { continue; }
             if (Math.random() < createEdgeProbability) {
               resultGraph[i].push(j);
             }
