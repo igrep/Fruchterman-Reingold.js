@@ -39,8 +39,28 @@
       // nodes :: Array<NodeId, Node>
       // graph :: Array<NodeId, Array<NodeId, number>>
       let svg, rootWidth, rootHeight, svgPoint, nodes, graph;
+      let shuffled = true;
 
-      const adjustNodePositions = () => {
+      const shufflePlace = (button) => {
+        if (shuffled) {
+          button.setAttribute('value', 'シャッフルする');
+          placeNodes();
+          shuffled = false;
+        } else {
+          for (const node of nodes) {
+            node.x = Math.random() * rootWidth;
+            node.y = Math.random() * rootHeight;
+          }
+          button.setAttribute('value', '再配置する');
+          shuffled = true;
+        }
+        for (const node of nodes) {
+          moveNode(node);
+          moveEdgesOf(node);
+        }
+      };
+
+      const placeNodes = () => {
         const rootArea = rootHeight * rootWidth;
         const nodeCount = nodes.length;
         const c = 1;
@@ -181,7 +201,8 @@
         edge.setAttribute('stroke', 'black');
         edge.setAttribute('id', `edge-${node1.id}-${node2.id}`);
         svg.appendChild(edge);
-      }
+      };
+
       const redraw = () => {
         for (const node of nodes) {
           moveNode(node);
@@ -190,8 +211,20 @@
 
       const moveNode = (node) => {
         const nodeSvg = document.getElementById(`node-${node.id}`);
-        nodeSvg.setAttribute('x', node.x - circleCenter);
-        nodeSvg.setAttribute('y', node.y - circleCenter);
+        nodeSvg.setAttribute('x', node.x - radius);
+        nodeSvg.setAttribute('y', node.y - radius);
+      };
+
+      const moveEdgesOf = (node1) => {
+        for (const node2Id of graph[node1.id]) {
+          const node2 = nodes[node2Id];
+          const edge = document.getElementById(`edge-${node1.id}-${node2.id}`);
+          const { x1, y1, x2, y2 } = calculateEdgePosition(node1, node2);
+          edge.setAttribute('x1', x1);
+          edge.setAttribute('y1', y1);
+          edge.setAttribute('x2', x2);
+          edge.setAttribute('y2', y2);
+        }
       };
 
       const init = () => {
@@ -203,9 +236,9 @@
         const result = generateNodes(10);
         nodes = result.nodes;
         graph = result.graph;
-        for (node1 of nodes) {
+        for (const node1 of nodes) {
           drawNewNode(node1);
-          for (node2Id of graph[node1.id]) {
+          for (const node2Id of graph[node1.id]) {
             const node2 = nodes[node2Id];
             drawNewEdge(node1, node2);
           }
@@ -215,7 +248,10 @@
   </head>
   <body onload="init()">
     <h1>自動描画されるグラフ</h1>
-    <svg id="graph" width="500" height="500" xmlns="http://www.w3.org/2000/svg">
+    <p>
+      <input type="button" value="再配置する" onclick="shufflePlace(this)" />
+    </p>
+    <svg id="graph" width="10000" height="10000" xmlns="http://www.w3.org/2000/svg">
     </svg>
   </body>
 </html>
