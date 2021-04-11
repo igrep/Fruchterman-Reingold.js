@@ -25,6 +25,7 @@
             if (resultGraph[i] === undefined){
               resultGraph[i] = [];
             }
+            if (i == j) { continue; }
             if (Math.random() < createEdgeProbability) {
               resultGraph[i].push(j);
             }
