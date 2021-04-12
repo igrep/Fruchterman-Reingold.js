@@ -33,7 +33,8 @@ Fruchterman-Reingold アルゴリズムの、JavaScriptを用いて実装してS
       const SVG_NS = "http://www.w3.org/2000/svg";
       const radius = 10;
 
-      const generateNodes = (nodesCount) => {
+      const generateNodes = () => {
+        const nodesCount = 10;
         const resultNodes = [];
         const resultGraph = [];
         const createEdgeProbability = 0.2;
@@ -262,7 +263,7 @@ Fruchterman-Reingold アルゴリズムの、JavaScriptを用いて実装してS
         rootWidth = parseInt(svg.getAttribute('width'), 10);
         rootHeight = parseInt(svg.getAttribute('height'), 10);
 
-        const result = generateNodes(10);
+        const result = generateNodes();
         nodes = result.nodes;
         graph = result.graph;
         for (const node1 of nodes) {
