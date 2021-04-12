@@ -63,11 +63,6 @@ Fruchterman-Reingold アルゴリズムの、JavaScriptを用いて実装してS
         return { nodes: resultNodes, graph: resultGraph };
       };
 
-      // type NodeId = int
-      // type Node = { id: NodeId, weight: int, displacement: Displacement, x: number, y: number }
-      // type Displacement = { x: number, y: number }
-      // nodes :: Array<NodeId, Node>
-      // graph :: Array<NodeId, Array<NodeId, number>>
       let svg, rootWidth, rootHeight, svgPoint, nodes, graph;
       let shuffled = true;
 
@@ -90,6 +85,17 @@ Fruchterman-Reingold アルゴリズムの、JavaScriptを用いて実装してS
         }
       };
 
+      // 実際に Fruchterman-Reingold アルゴリズムを実装している関数。
+      // 利用している主な型は次のとおり:
+      //// Vector は x と y を数値として持つオブジェクト
+      // type Vector = { x: number, y: number }
+      // type NodeId = int;
+      //// Node は Vector に displacement と id を加えたオブジェクト
+      // type Node = { x: number, y: number, id: NodeId, displacement: Vector }
+      //// NodeId をキー、 Node の実態を値として持つ連想配列
+      // nodes :: Array<NodeId, Node>
+      //// NodeId をキー、 NodeId に該当する Node がつながっている NodeId の配列を値とする
+      // graph :: Array<NodeId, NodeId[]>
       const placeNodes = () => {
         const rootArea = rootHeight * rootWidth;
         const nodeCount = nodes.length;
