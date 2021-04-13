@@ -5,18 +5,16 @@
 ====
 
 Fruchterman-Reingold アルゴリズムの、JavaScriptを用いて実装してSVGで可視化
-したつもりの実装。参考となる論文の擬似コードのとおりに実装したつもりが、
-なぜかiterationを1回繰り返す度にノードがどんどん画面右下に集まってしまい、
-30回程度繰り返したところですべてのノードが右下に固まり、結果位置にNaNが
-代入されてしまう。定数cやノードの数、領域の大きさなどいろいろ調整して
-みたが結果は変わらず、手詰まりになってしまった。
+した実装。ノードがなぜか右下に集まってしまう、という問題がありましたが、
+https://teratail.com/questions/332844 の質問のおかげで解決しました。
+ayanamizuta さんありがとうございました！
 
 使い方
 ======
 
 初期状態では、生成されたノードはすべてランダムに配置される。
 「再配置する」ボタンをクリックするとFruchterman-Reingold アルゴリズムで
-各ノードの位置を調整する（が、上述のとおり意図通りに動いていない）。
+各ノードの位置を調整する。
 
 参考文献
 ========
@@ -148,8 +146,8 @@ Fruchterman-Reingold アルゴリズムの、JavaScriptを用いて実装してS
 
           for (const node of nodes){
             const length = Math.sqrt(Math.pow(node.displacement.x, 2) + Math.pow(node.displacement.y, 2));
-            node.x = node.x + (node.displacement.x / length) * Math.min(node.displacement.x, t);
-            node.y = node.y + (node.displacement.y / length) * Math.min(node.displacement.y, t);
+            node.x = node.x + (node.displacement.x / length) * Math.min(length, t);
+            node.y = node.y + (node.displacement.y / length) * Math.min(length, t);
 
             // 中心が0ではないため、元の論文の式のとおりではなく、最も端の点と比較する
             node.x = Math.min(rootWidth, Math.max(0, node.x));
